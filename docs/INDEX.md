@@ -11,6 +11,10 @@
   - 프로젝트 목표, MVP 범위, 비기능 요구사항
 - `2026-04-20_테이블_설계.md`
   - 테이블 구조, 컬럼 설명, 설계 이유, 동시성 전략
+- `src/main/java/com/yoon/pickz/common/API_공통_정책_초안.md`
+  - Base URL, 버전 정책, 시간/금액/인증/응답 포맷 공통 기준
+- `src/main/java/com/yoon/pickz/domain/auth/entity/API_인증_명세_초안.md`
+  - 회원가입/로그인/토큰 재발급/로그아웃 명세
 
 ## 도메인 의사결정 문서 (구현 근처)
 

@@ -1,3 +1,40 @@
 spring:
   application:
     name: pickz
+
+  # 프로젝트 루트의 .env를 프로퍼티로 읽어서 ${DB_URL} 같은 치환값을 해결
+  config:
+    import: optional:file:.env[.properties]
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update   
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
+  jackson:
+    time-zone: UTC
+
+server:
+  port: 8080
+
+jwt:
+  issuer: pickz
+  secret: ${JWT_SECRET}
+  refresh-key: ${JWT_REFRESH_KEY}
+  access-token-validity-seconds: ${JWT_ACCESS_TOKEN_VALIDITY_SECONDS}
+  refresh-token-validity-seconds: ${JWT_REFRESH_TOKEN_VALIDITY_SECONDS}
