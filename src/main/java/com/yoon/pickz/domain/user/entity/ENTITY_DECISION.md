@@ -36,7 +36,8 @@
 ### 3) `business_profiles`
 
 - `id`: 업체 프로필 식별자(PK)
-- `owner_user_id`: 사업체 대표 계정 사용자 식별자
+- ~~`owner_user_id`: 사업체 대표 계정 사용자 식별자~~ → 아래 변경 이력 참고
+- `owner_user_id`: 사업체를 **최초 생성한** 사용자 식별자 (불변 이력 용도, 현재 대표자 권한과 무관)
 - `company_name`: 업체명
 - `business_number`: 사업자등록번호(UNIQUE)
 - `owner_name`: 대표자명
@@ -62,6 +63,14 @@
 - `business_profiles`는 사업체 사용자 전용 판매 프로필로 사용한다.
 - 두 프로필은 의미와 운영 정책이 다르므로 직접 FK로 연결하지 않는다.
 - 공용 계정을 피하고 사용자별 행위 추적을 가능하게 하기 위해 `business_members`를 사용해 사업체 1:N 사용자 구조를 지원한다.
+
+### `owner_user_id`와 `business_members` 역할 분리 정책
+
+- `business_profiles.owner_user_id`: **불변 이력** 용도. 사업체를 최초 생성한 사람을 기록하며, 이후 대표자가 바뀌어도 변경하지 않는다.
+- `business_members`의 `member_role = OWNER`: **현재 대표자 권한**을 나타내는 정본. 대표자 승계/변경은 이 테이블을 기준으로 처리한다.
+- 두 값이 다를 수 있는 것은 정상이며, "최초 생성자 ≠ 현재 대표자" 상태를 의도적으로 허용한다.
+- 현재 대표자 조회: `business_members WHERE member_role = OWNER AND member_status = ACTIVE`
+- 최초 생성자 조회: `business_profiles.owner_user_id`
 
 ## 제약/인덱스 정책
 
@@ -105,3 +114,16 @@
 - 사업체 내 다계정 운영 가능(OWNER, MANAGER, STAFF)
 - 공용 계정 사용을 피하고 사용자별 감사 추적 가능
 - 팀원 초대/권한 변경/탈퇴 등 운영 기능 확장 용이
+
+---
+
+## 변경 이력
+
+### 2026-05-29 `owner_user_id` 역할 명확화
+
+- **변경 내용**: `business_profiles.owner_user_id`의 역할을 "대표 계정"에서 "최초 생성자 불변 이력"으로 명확화
+- **변경 이유**: 문서에 역할이 명시되지 않아 `business_members`의 `OWNER`와 혼선이 발생. 실제 의도는 대표자 승계 히스토리 추적을 위한 불변 이력 용도였음
+- **정책 결론**:
+  - 현재 대표자 권한 → `business_members (member_role = OWNER)` 기준
+  - 최초 생성자 이력 → `business_profiles.owner_user_id` 기준
+  - 두 값이 다른 상태는 정상(대표자 승계 발생 시)
