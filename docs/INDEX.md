@@ -11,6 +11,8 @@
   - 프로젝트 목표, MVP 범위, 비기능 요구사항
 - `2026-04-20_테이블_설계.md`
   - 테이블 구조, 컬럼 설명, 설계 이유, 동시성 전략
+- `패키지_구조_설계.md`
+  - 패키지 구조, BaseEntity / BaseLogEntity 설계, JPA 연관관계 원칙
 - `src/main/java/com/yoon/pickz/common/API_공통_정책_초안.md`
   - Base URL, 버전 정책, 시간/금액/인증/응답 포맷 공통 기준
 - `src/main/java/com/yoon/pickz/domain/auth/entity/API_인증_명세_초안.md`

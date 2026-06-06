@@ -28,6 +28,7 @@
 - `version`: 낙관적 락 버전
 - `created_at`: 생성 시각
 - `updated_at`: 수정 시각
+- `deleted_at`: 소프트 삭제 시각 ← 2026-05-29 추가
 
 ### 2) `auction_images`
 
@@ -37,6 +38,8 @@
 - `image_type`: 이미지 타입(THUMBNAIL, DETAIL)
 - `sort_order`: 노출 순서
 - `created_at`: 생성 시각
+- `updated_at`: 수정 시각 ← 2026-05-29 추가
+- `deleted_at`: 소프트 삭제 시각 ← 2026-05-29 추가
 
 ### 3) `auction_results`
 
@@ -56,6 +59,34 @@
 - 이미지를 별도 테이블로 분리해 다중 이미지 및 타입별 관리 요구를 수용한다.
 - `max_end_at`을 NULL 허용으로 둬 상한 없는 연장 정책도 허용한다.
 
+## Enum 상태 전환 규칙
+
+### `AuctionStatus` (auctions.status)
+
+```
+SCHEDULED ──→ LIVE       (경매 시작 시각 도달)
+SCHEDULED ──→ CANCELLED  (시작 전 취소)
+LIVE ──→ ENDED           (종료 시각 도달 + auction_results 생성)
+LIVE ──→ CANCELLED       (진행 중 강제 취소)
+ENDED ──→ (전환 없음, 최종 상태)
+CANCELLED ──→ (전환 없음, 최종 상태)
+```
+
+> `ENDED` 전환은 반드시 `auction_results` INSERT와 단일 트랜잭션으로 처리한다.
+
+### `ImageType` (auction_images.image_type)
+
+- `THUMBNAIL`: 경매 목록/상세 대표 이미지 — 경매당 1장
+- `DETAIL`: 상품 상세 이미지 — 여러 장 가능, `sort_order`로 순서 관리
+- 타입 변경은 허용하지 않는다 (삭제 후 재등록)
+
+### `ResultStatus` (auction_results.result_status)
+
+- 최초 저장 시 확정되며 이후 변경하지 않는다.
+- `SOLD`: 낙찰 — `winner_id`, `winning_bid_id`, `final_price` 모두 필수
+- `UNSOLD`: 유찰 — 입찰 없이 종료, 세 필드 모두 NULL
+- `CANCELLED`: 경매 취소로 인한 결과 — 세 필드 모두 NULL
+
 ## 제약/인덱스 정책
 
 - 현재 단계는 UNIQUE만 최소 적용한다.
@@ -73,3 +104,18 @@
 
 - Redis는 실시간성 보조(상태 전달, 캐시) 및 병목 완화를 위한 보조 계층으로 활용한다.
 - 경매/결과 정본 데이터는 DB를 기준으로 관리한다.
+
+## 타임스탬프 정책
+
+- 도메인 엔티티와 로그형 테이블을 구분해 타임스탬프 구성을 다르게 가져간다.
+- `auctions`, `auction_images`: 상태가 변하고 소프트 삭제가 의미 있는 도메인 엔티티 → `created_at` + `updated_at` + `deleted_at` (BaseEntity 적용)
+- `auction_results`: 종료 결과 확정본으로 한번 저장 후 수정/삭제 없는 로그형 → `created_at`만 유지
+
+## 변경 이력
+
+### 2026-05-29 — 타임스탬프 정책 통일
+
+- **변경 내용**:
+  - `auctions`: `deleted_at` 추가
+  - `auction_images`: `updated_at`, `deleted_at` 추가
+- **변경 이유**: 실무 보관 정책(최소 3년) 기준으로 도메인 엔티티 전체에 소프트 삭제 적용. `auction_results`는 로그형 테이블로 분류해 `created_at`만 유지

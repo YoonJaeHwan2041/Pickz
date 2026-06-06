@@ -57,6 +57,9 @@ replay_pid*
 # Local AI working notes (do not push)
 ai/
 
+# Local scratch / re-onboarding notes (do not push)
+zz/
+
 .env
 
 docker-compose.yml

@@ -30,6 +30,14 @@
   - `refresh_tokens.token_hash`
 - 일반 인덱스는 초기 단계에서 제외한다.
 
+## 타임스탬프 정책
+
+- `refresh_tokens`는 로그형 테이블로 분류한다.
+- 한번 발급 후 수정이 없는 불변 이력이므로 `created_at`만 유지한다.
+- 상태 관리는 `expires_at`(자연 만료), `revoked_at`(강제 무효화)으로 처리한다.
+- `updated_at`, `deleted_at`은 의도적으로 제외한다.
+- BaseEntity 적용 대상에서 제외하고 별도로 관리한다.
+
 ## Redis 메모
 
 - Redis를 인증 보조 캐시로 사용할 수 있으나, 토큰 정본과 폐기 이력은 DB 기준으로 관리한다.
