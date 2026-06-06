@@ -7,8 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.yoon.pickz.common.exception.BusinessException;
-import com.yoon.pickz.domain.auth.dto.SignUpRequest;
-import com.yoon.pickz.domain.auth.dto.SignUpResponse;
+import com.yoon.pickz.domain.auth.dto.AuthDto;
 import com.yoon.pickz.domain.auth.exception.AuthErrorCode;
 import com.yoon.pickz.domain.user.entity.User;
 import com.yoon.pickz.domain.user.entity.enums.UserType;
@@ -24,7 +23,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public SignUpResponse signup(SignUpRequest request) {
+    public AuthDto.SignUpResponse signup(AuthDto.SignUpRequest request) {
         if (request.userType() != UserType.GENERAL && request.userType() != UserType.BUSINESS) {
             throw new BusinessException(
                 AuthErrorCode.INVALID_REQUEST,
@@ -50,6 +49,6 @@ public class UserService {
         User user = new User(request.email(), encodedPassword, request.nickname(), request.userType());
         User saved = userRepository.save(user);
 
-        return new SignUpResponse(saved.getId(), saved.getEmail(), saved.getUserType());
+        return new AuthDto.SignUpResponse(saved.getId(), saved.getEmail(), saved.getUserType());
     }
 }

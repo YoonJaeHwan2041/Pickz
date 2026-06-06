@@ -8,8 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.yoon.pickz.common.response.ApiResponse;
-import com.yoon.pickz.domain.auth.dto.SignUpRequest;
-import com.yoon.pickz.domain.auth.dto.SignUpResponse;
+import com.yoon.pickz.domain.auth.dto.AuthDto;
 import com.yoon.pickz.domain.user.service.UserService;
 
 import jakarta.validation.Valid;
@@ -23,8 +22,8 @@ public class AuthController {
     private final UserService userService;
 
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<SignUpResponse>> signup(@Valid @RequestBody SignUpRequest request) {
-        SignUpResponse response = userService.signup(request);
+    public ResponseEntity<ApiResponse<AuthDto.SignUpResponse>> signup(@Valid @RequestBody AuthDto.SignUpRequest request) {
+        AuthDto.SignUpResponse response = userService.signup(request);
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.success(response, null));
     }
