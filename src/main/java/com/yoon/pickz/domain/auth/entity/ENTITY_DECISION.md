@@ -41,3 +41,36 @@
 ## Redis 메모
 
 - Redis를 인증 보조 캐시로 사용할 수 있으나, 토큰 정본과 폐기 이력은 DB 기준으로 관리한다.
+
+---
+
+## 구현 결정사항 (2026-06-15 추가)
+
+### JWT 라이브러리 선택 — jjwt
+
+- **선택**: `io.jsonwebtoken:jjwt`
+- **이유**: Spring Boot 생태계에서 가장 널리 쓰이는 JWT 라이브러리. 서명 알고리즘(HMAC-SHA256) 지원, 빌더 패턴으로 가독성이 높고 검증 로직이 단순함
+
+### Access Token / Refresh Token 키 분리
+
+- Access Token과 Refresh Token에 **서로 다른 시크릿 키**를 사용한다 (`jwt.secret`, `jwt.refresh-key`)
+- **이유**: 키가 하나면 Refresh Token으로 Access Token을 위조하거나 반대로 악용하는 공격이 가능함. 키를 분리하면 용도별 토큰의 경계가 명확해지고 한쪽 키가 유출돼도 다른 토큰은 안전
+
+### Refresh Token 해싱 — SHA-256
+
+- DB에 Refresh Token 원문 대신 **SHA-256 해시값**을 저장한다
+- **이유**: DB가 탈취되더라도 원문 토큰을 복원할 수 없어 피해 최소화. 검증 시에는 요청으로 받은 토큰을 똑같이 해싱해서 비교하므로 기능 손실 없음
+
+### 로그인 처리 흐름
+
+```
+1. 이메일 형식 검증 (Pattern 매칭)
+2. DB에서 이메일로 User 조회
+3. UserStatus.ACTIVE 여부 확인 (탈퇴/정지 계정 차단)
+4. BCrypt 비밀번호 검증
+5. Access Token 발급 (userId, email 클레임 포함)
+6. Refresh Token 발급 + SHA-256 해싱 후 DB 저장
+7. 응답: Access Token → body, Refresh Token → HttpOnly Cookie
+```
+
+- 2~4번이 실패하면 **어느 단계에서 실패했는지 노출하지 않고** `INVALID_CREDENTIALS` 단일 에러로 응답 (이메일 존재 여부 노출 방지)
