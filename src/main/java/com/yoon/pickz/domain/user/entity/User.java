@@ -55,4 +55,12 @@ public class User extends BaseEntity {
         this.userType = userType;
         this.status = UserStatus.ACTIVE;
     }
+
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void updateProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
 }
