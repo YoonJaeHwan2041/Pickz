@@ -91,6 +91,14 @@ public class AuthService {
         return new AuthDto.RefreshResponse(accessToken.token(), accessToken.expiresAt());
     }
 
+    @Transactional
+    public void logout(String rawRefreshToken) {
+        String tokenHash = hashToken(rawRefreshToken);
+        refreshTokenRepository.findByTokenHash(tokenHash)
+            .filter(RefreshToken::isValid)
+            .ifPresent(RefreshToken::revoke);
+    }
+
     private String hashToken(String token) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

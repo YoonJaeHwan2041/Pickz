@@ -60,4 +60,25 @@ public class AuthController {
         AuthDto.RefreshResponse response = authService.refresh(refreshToken);
         return ResponseEntity.ok(ApiResponse.success(response, null));
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(
+        @CookieValue(name = "refreshToken", required = false) String refreshToken
+    ) {
+        if (refreshToken != null) {
+            authService.logout(refreshToken);
+        }
+
+        ResponseCookie expiredCookie = ResponseCookie.from("refreshToken", "")
+            .httpOnly(true)
+            .secure(true)
+            .sameSite("Lax")
+            .path("/api/v1/auth")
+            .maxAge(0)
+            .build();
+
+        return ResponseEntity.ok()
+            .header(HttpHeaders.SET_COOKIE, expiredCookie.toString())
+            .body(ApiResponse.success(null, null));
+    }
 }
